@@ -49,3 +49,9 @@ Aplikace slouží jako výukový nástroj pro pochopení základních principů 
 - generování náhodných binárních příkladů
 - ověřování správnosti odpovědi
 - sledování skóre a série správných odpovědí
+
+- ## Spuštění aplikace
+
+Aplikace je dostupná online prostřednictvím GitHub Pages:
+
+https://tomaslinka1234.github.io/digitalni-prevodnik/

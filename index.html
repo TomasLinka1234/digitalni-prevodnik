@@ -1,0 +1,1642 @@
+<!DOCTYPE html>
+<html lang="cs">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Digitální převodník – soustavy, IP adresy a barvy</title>
+    <style>
+        :root {
+            --bg: #07101c;
+            --panel: rgba(9, 18, 34, 0.78);
+            --panel-2: rgba(16, 27, 48, 0.82);
+            --text: #edf6ff;
+            --muted: #aab9d6;
+            --accent: #73b7ff;
+            --accent-2: #8ef0c7;
+            --border: rgba(180, 220, 255, 0.14);
+            --shadow: 0 24px 60px rgba(0, 0, 0, 0.34);
+            --radius: 24px;
+            --warning: #ffd166;
+            --danger: #ff6b6b;
+            --muthur-green: #7af042;
+            --muthur-bg: #050806;
+            --muthur-panel: rgba(6, 12, 6, 0.84);
+            --muthur-border: rgba(122, 240, 66, 0.28);
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body {
+            margin: 0;
+            min-height: 100%;
+            font-family: Inter, system-ui, Arial, sans-serif;
+            color: var(--text);
+            background: radial-gradient(circle at top left, rgba(115, 183, 255, 0.16), transparent 26%), radial-gradient(circle at top right, rgba(142, 240, 199, 0.10), transparent 24%), linear-gradient(180deg, #07101c 0%, #091322 100%);
+        }
+
+        body {
+            overflow-x: hidden;
+            transition: background 0.45s ease, color 0.35s ease;
+        }
+
+        body.light-mode {
+            color: #1e2b3b;
+            background: radial-gradient(circle at top left, rgba(115, 183, 255, 0.08), transparent 26%), radial-gradient(circle at top right, rgba(142, 240, 199, 0.06), transparent 24%), linear-gradient(180deg, #f6f9fd 0%, #edf3f9 100%);
+        }
+
+        body.light-mode .topbar, body.light-mode .card {
+            background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(250,252,255,0.92));
+            border-color: rgba(30,43,59,0.10);
+            box-shadow: 0 18px 40px rgba(80,100,130,0.10);
+        }
+
+        body.light-mode p, body.light-mode label, body.light-mode .result small,
+        body.light-mode .muted-label, body.light-mode .message, body.light-mode .explanation,
+        body.light-mode .explanation ol, body.light-mode .explanation ul,
+        body.light-mode .mini span, body.light-mode .bit-top, body.light-mode .bit-bottom,
+        body.light-mode .stat-label, body.light-mode .info-card li { color: #56657a; }
+
+        body.light-mode .mini, body.light-mode .result, body.light-mode .info-card,
+        body.light-mode .challenge-box, body.light-mode .section-block, body.light-mode input,
+        body.light-mode button.secondary, body.light-mode .chip, body.light-mode .nav-btn,
+        body.light-mode .bit-cell, body.light-mode .stat-chip {
+            background: rgba(255,255,255,0.98);
+            color: #1e2b3b;
+            border-color: rgba(30,43,59,0.10);
+        }
+
+        body.light-mode .nav-btn.active, body.light-mode .nav-btn:hover {
+            background: linear-gradient(90deg, rgba(115,183,255,0.14), rgba(142,240,199,0.12));
+            box-shadow: 0 0 0 1px rgba(115,183,255,0.08), 0 8px 18px rgba(115,183,255,0.10);
+        }
+
+        body.light-mode input:focus {
+            border-color: rgba(115,183,255,0.45);
+            box-shadow: 0 0 0 3px rgba(115,183,255,0.10);
+        }
+
+        body.light-mode .num {
+            color: rgba(95,130,190,0.42);
+            text-shadow: 0 0 3px rgba(115,183,255,0.12), 0 0 8px rgba(115,183,255,0.08);
+        }
+
+        body.light-mode .soctet { background: rgba(255,255,255,0.98); border-color: rgba(30,43,59,0.10); }
+        body.light-mode .soctet-val { color: #1e2b3b; }
+        body.light-mode .soctet-hex { color: #56657a; }
+        body.light-mode .sbar-wrap { background: rgba(30,43,59,0.08); }
+
+        .nostromo-bg {
+            position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0;
+            background: radial-gradient(circle at 18% 30%, rgba(115,183,255,0.06), transparent 24%), radial-gradient(circle at 82% 68%, rgba(142,240,199,0.05), transparent 28%);
+        }
+
+        .starfield, .scanlines, .glowfog, .numbers-layer { position: absolute; inset: 0; }
+
+        .starfield {
+            background-image: radial-gradient(circle at 8% 18%, rgba(255,255,255,0.65) 0 1px, transparent 1.6px), radial-gradient(circle at 14% 72%, rgba(160,220,255,0.65) 0 1px, transparent 1.5px), radial-gradient(circle at 26% 42%, rgba(255,255,255,0.55) 0 1px, transparent 1.4px), radial-gradient(circle at 39% 20%, rgba(142,240,199,0.55) 0 1px, transparent 1.7px), radial-gradient(circle at 48% 82%, rgba(255,255,255,0.4) 0 1px, transparent 1.4px), radial-gradient(circle at 63% 28%, rgba(115,183,255,0.65) 0 1px, transparent 1.6px), radial-gradient(circle at 74% 57%, rgba(255,255,255,0.6) 0 1px, transparent 1.5px), radial-gradient(circle at 88% 16%, rgba(142,240,199,0.45) 0 1px, transparent 1.7px), radial-gradient(circle at 91% 76%, rgba(255,255,255,0.55) 0 1px, transparent 1.4px);
+            opacity: 0.42;
+            animation: twinkle 8s ease-in-out infinite alternate;
+        }
+
+        .glowfog {
+            background: radial-gradient(circle at 20% 50%, rgba(115,183,255,0.08), transparent 30%), radial-gradient(circle at 80% 35%, rgba(142,240,199,0.06), transparent 28%), radial-gradient(circle at 50% 70%, rgba(115,183,255,0.04), transparent 34%);
+            filter: blur(20px); opacity: 0.8;
+        }
+
+        .scanlines {
+            background: repeating-linear-gradient(180deg, rgba(115,183,255,0.05) 0px, rgba(115,183,255,0.05) 1px, transparent 2px, transparent 6px);
+            mix-blend-mode: screen; opacity: 0.55;
+            animation: scanDrift 10s linear infinite;
+        }
+
+        .numbers-layer { overflow: hidden; font-family: "Courier New", monospace; }
+
+        .num {
+            position: absolute; left: 0; bottom: -10vh; white-space: nowrap;
+            color: rgba(115,183,255,0.75);
+            text-shadow: 0 0 6px rgba(115,183,255,0.8), 0 0 14px rgba(115,183,255,0.4);
+            animation: floatNum linear forwards; opacity: 0;
+            transition: color 0.3s ease, text-shadow 0.3s ease;
+            user-select: none;
+        }
+
+        body.numbers-error .num {
+            color: rgba(255,91,91,0.92);
+            text-shadow: 0 0 8px rgba(255,91,91,0.9), 0 0 18px rgba(255,91,91,0.48);
+        }
+
+        body.color-sync .num {
+            color: var(--dynamic-num-color, rgba(115,183,255,0.78));
+            text-shadow: 0 0 6px color-mix(in srgb, var(--dynamic-num-color, rgba(115,183,255,0.78)) 85%, white 15%), 0 0 16px color-mix(in srgb, var(--dynamic-num-color, rgba(115,183,255,0.78)) 55%, transparent 45%);
+        }
+
+        body.muthur-mode .num {
+            color: rgba(122,240,66,0.92);
+            text-shadow: 0 0 8px rgba(122,240,66,0.85), 0 0 20px rgba(122,240,66,0.3);
+        }
+
+        .boot-overlay {
+            position: fixed; inset: 0; z-index: 20;
+            display: flex; align-items: center; justify-content: center; padding: 24px;
+            background: rgba(2,6,2,0.92); opacity: 0; pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+        .boot-overlay.active { opacity: 1; }
+
+        .boot-screen {
+            width: min(760px, 100%);
+            border: 1px solid rgba(122,240,66,0.34);
+            background: rgba(5,10,5,0.96);
+            border-radius: 18px; padding: 22px;
+            color: var(--muthur-green);
+            box-shadow: 0 0 24px rgba(122,240,66,0.12), inset 0 0 30px rgba(122,240,66,0.03);
+            font-family: "Courier New", monospace;
+        }
+
+        .boot-title { font-size: 1.2rem; margin-bottom: 14px; }
+        .boot-line { display: block; min-height: 1.4em; color: rgba(173,255,143,0.95); margin-bottom: 8px; }
+
+        .content {
+            position: relative; z-index: 2;
+            width: min(1160px, calc(100% - 32px));
+            margin: 0 auto; padding: 24px 0 48px;
+        }
+
+        .topbar {
+            position: sticky; top: 12px; z-index: 10;
+            margin-bottom: 18px;
+            display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+            padding: 10px;
+            background: rgba(7,16,28,0.75);
+            border: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+        }
+
+        .nav-btn {
+            border: 1px solid var(--border);
+            background: rgba(16,27,48,0.82);
+            color: var(--text);
+            padding: 12px 18px; border-radius: 999px; cursor: pointer;
+            font: inherit; font-weight: 800; font-size: 14px; letter-spacing: 0.4px;
+            transition: .25s ease;
+        }
+
+        .nav-btn.active, .nav-btn:hover {
+            background: linear-gradient(90deg, rgba(115,183,255,0.24), rgba(142,240,199,0.18));
+            border-color: rgba(115,183,255,0.45);
+            transform: translateY(-1px);
+            box-shadow: 0 0 12px rgba(115,183,255,0.32);
+        }
+
+        .toolbar-right { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        .card {
+            background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+            transition: background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+        }
+
+        .hero, .panel { padding: 24px; margin-bottom: 20px; }
+        h1, h2, h3 { margin: 0 0 12px; }
+        h1 { font-size: clamp(2rem, 4vw, 3.2rem); letter-spacing: -0.03em; line-height: 1.05; }
+        h2 { font-size: clamp(1.5rem, 2.4vw, 2rem); }
+        p { margin: 0; color: var(--muted); line-height: 1.65; transition: color 0.35s ease; }
+
+        .grid, .results {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px; margin-top: 18px;
+        }
+
+        .systems-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
+            gap: 22px; margin-top: 18px; align-items: start;
+        }
+
+        .systems-main, .systems-side { display: grid; gap: 18px; }
+
+        .section-block, .mini, .result, .challenge-box, .stat-chip {
+            padding: 18px; border-radius: 18px;
+            border: 1px solid var(--border);
+            background: var(--panel-2);
+            transition: background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease, color 0.35s ease;
+            min-width: 0;
+        }
+
+        .info-row {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px; margin-top: 22px; align-items: stretch;
+        }
+
+        .info-card {
+            position: relative;
+            border: 1px solid var(--border);
+            background: linear-gradient(180deg, rgba(20,34,58,0.95), rgba(13,24,43,0.92));
+            border-radius: 22px; padding: 22px 20px 18px;
+            min-width: 0; overflow: hidden;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+        }
+
+        .info-card::before {
+            content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px;
+            background: linear-gradient(90deg, rgba(115,183,255,0.95), rgba(142,240,199,0.85));
+        }
+
+        .info-card strong { display: block; margin-bottom: 12px; font-size: 1.04rem; letter-spacing: 0.01em; }
+        .info-card ul { margin: 0; padding-left: 18px; display: grid; gap: 8px; line-height: 1.7; }
+        .mini strong, .result strong, .challenge-box strong, .section-block strong { display: block; margin-bottom: 6px; font-size: 1.05rem; }
+
+        .converter { display: grid; gap: 14px; }
+        .field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+        label { font-size: 0.95rem; color: var(--muted); transition: color 0.35s ease; }
+
+        input {
+            width: 100%; padding: 14px 16px; border-radius: 16px;
+            border: 1px solid var(--border);
+            background: rgba(9,18,34,0.78);
+            color: var(--text); outline: none;
+            font: inherit; font-size: 1rem;
+            transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+            min-width: 0;
+        }
+
+        input:focus { border-color: rgba(115,183,255,0.6); box-shadow: 0 0 0 3px rgba(115,183,255,0.14); }
+
+        input.error {
+            border-color: rgba(255,91,91,0.85) !important;
+            box-shadow: 0 0 0 3px rgba(255,91,91,0.22), 0 0 22px rgba(255,91,91,0.12);
+            animation: pulseError 0.8s ease-in-out infinite;
+        }
+
+        .btn-row, .examples { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+
+        button, .chip {
+            border: 0; padding: 12px 16px; border-radius: 14px; cursor: pointer;
+            font: inherit; font-weight: 700;
+            transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
+        }
+
+        button:hover, .chip:hover { transform: translateY(-1px); }
+        button { color: #06101f; background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+        button.secondary, .chip { color: var(--text); background: rgba(16,27,48,0.82); border: 1px solid var(--border); }
+
+        .result small, .muted-label, .stat-label { display: block; color: var(--muted); margin-bottom: 8px; transition: color 0.35s ease; }
+        .value-wrap { font-family: "Courier New", monospace; overflow-wrap: anywhere; word-break: break-word; line-height: 1.35; max-width: 100%; }
+
+        .message, .explanation {
+            margin-top: 18px; padding: 18px; border-radius: 18px;
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.03);
+            color: var(--muted);
+            transition: background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease, color 0.35s ease;
+        }
+
+        .message.error { border-color: rgba(255,91,91,0.35); background: rgba(255,91,91,0.08); color: #ffb3b3; box-shadow: 0 0 0 2px rgba(255,91,91,0.15) inset; }
+        .message.warning { border-color: rgba(255,209,102,0.35); background: rgba(255,209,102,0.08); color: #ffe29a; box-shadow: 0 0 0 2px rgba(255,209,102,0.12) inset; }
+        .challenge-box.good { border-color: rgba(142,240,199,0.35); box-shadow: 0 0 0 2px rgba(142,240,199,0.12) inset; }
+        .challenge-box.bad { border-color: rgba(255,91,91,0.35); box-shadow: 0 0 0 2px rgba(255,91,91,0.12) inset; }
+
+        .challenge-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
+        .stat-chip { text-align: center; padding: 14px 12px; }
+        .stat-value { font-family: "Courier New", monospace; font-size: 1.2rem; font-weight: 700; }
+        .error-text { color: var(--danger); font-weight: 800; letter-spacing: 0.02em; text-shadow: 0 0 8px rgba(255,91,91,0.5); }
+        .explanation ol, .explanation ul { margin: 0; padding-left: 20px; line-height: 1.75; }
+
+        .terminal-cursor::after { content: "█"; display: inline-block; margin-left: 6px; animation: blinkCursor 0.9s steps(1, end) infinite; }
+
+        .swatch { width: 100%; min-height: 140px; border-radius: 18px; border: 1px solid var(--border); background: #2A7FFF; box-shadow: inset 0 0 24px rgba(255,255,255,0.06); margin-top: 18px; }
+
+        .bits-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 10px; margin-top: 14px; }
+        .bit-cell { padding: 12px; border-radius: 14px; border: 1px solid var(--border); background: rgba(16,27,48,0.82); text-align: center; }
+        .bit-top { font-size: 0.8rem; color: var(--muted); margin-bottom: 6px; }
+        .bit-mid { font-family: "Courier New", monospace; font-size: 1.2rem; font-weight: 700; margin-bottom: 6px; }
+        .bit-bottom { font-size: 0.82rem; color: var(--muted); }
+        .range-line { font-family: "Courier New", monospace; overflow-wrap: anywhere; }
+
+        /* ── Subnet visual ───────────────────────────────────────────── */
+        #subnetVisual { margin-top: 18px; }
+
+        .subnet-inner {
+            padding: 20px 20px 18px;
+            border-radius: 18px;
+            border: 1px solid var(--border);
+            background: var(--panel-2);
+        }
+
+        .subnet-inner strong { display: block; margin-bottom: 4px; font-size: 1.05rem; }
+        .subnet-inner p { margin-bottom: 16px; font-size: 0.9rem; }
+
+        .soctet-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .soctet {
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: rgba(9,18,34,0.72);
+            overflow: hidden;
+            transition: border-color 0.3s ease;
+        }
+
+        .soctet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px 4px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .soctet-val {
+            font-size: 1.05rem;
+            font-weight: 800;
+            font-family: "Courier New", monospace;
+            color: var(--text);
+        }
+
+        .soctet-hex {
+            font-size: 0.78rem;
+            color: var(--muted);
+            font-family: "Courier New", monospace;
+        }
+
+        .soctet-bits-wrap {
+            display: flex;
+            padding: 8px 6px;
+            gap: 2px;
+        }
+
+        .sbit {
+            flex: 1;
+            height: 32px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: "Courier New", monospace;
+            font-size: 0.78rem;
+            font-weight: 800;
+            transition: background 0.3s ease, color 0.3s ease;
+            position: relative;
+        }
+
+        .sbit.sbit-net {
+            background: rgba(115, 183, 255, 0.55);
+            color: #fff;
+            box-shadow: 0 0 6px rgba(115,183,255,0.2);
+        }
+
+        .sbit.sbit-host {
+            background: rgba(142, 240, 199, 0.38);
+            color: #fff;
+            box-shadow: 0 0 6px rgba(142,240,199,0.14);
+        }
+
+        .sbit.sbit-boundary-right {
+            border-right: 2px solid rgba(255,255,255,0.5);
+            margin-right: 2px;
+        }
+
+        .soctet.octet-full-net { border-color: rgba(115,183,255,0.45); }
+        .soctet.octet-full-host { border-color: rgba(142,240,199,0.35); }
+        .soctet.octet-split { border-color: rgba(255,209,102,0.45); }
+
+        .sbar-wrap {
+            display: flex;
+            height: 36px;
+            border-radius: 10px;
+            overflow: hidden;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            margin-bottom: 12px;
+        }
+
+        .sbar-net {
+            background: linear-gradient(90deg, rgba(115,183,255,0.75), rgba(115,183,255,0.55));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            transition: width 0.5s cubic-bezier(.4,0,.2,1);
+            min-width: 0;
+        }
+
+        .sbar-host {
+            background: linear-gradient(90deg, rgba(142,240,199,0.55), rgba(142,240,199,0.38));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            transition: width 0.5s cubic-bezier(.4,0,.2,1);
+            min-width: 0;
+            flex: 1;
+        }
+
+        .sbar-label {
+            font-size: 0.78rem;
+            font-weight: 800;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 0 8px;
+            color: rgba(255,255,255,0.95);
+        }
+
+        .slegend {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .slegend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+
+        .slegend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+
+        .slegend-dot.net { background: rgba(115,183,255,0.75); }
+        .slegend-dot.host { background: rgba(142,240,199,0.6); }
+
+        /* muthur mode subnet */
+        body.muthur-mode .soctet { background: rgba(5,10,5,0.8); border-color: var(--muthur-border); }
+        body.muthur-mode .sbit.sbit-net { background: rgba(122,240,66,0.5); }
+        body.muthur-mode .sbit.sbit-host { background: rgba(122,240,66,0.22); }
+        body.muthur-mode .sbar-net { background: linear-gradient(90deg, rgba(122,240,66,0.7), rgba(122,240,66,0.5)); }
+        body.muthur-mode .sbar-host { background: linear-gradient(90deg, rgba(122,240,66,0.28), rgba(122,240,66,0.16)); }
+        body.muthur-mode .subnet-inner { background: var(--muthur-panel); border-color: var(--muthur-border); }
+        body.muthur-mode .slegend-dot.net { background: rgba(122,240,66,0.7); }
+        body.muthur-mode .slegend-dot.host { background: rgba(122,240,66,0.3); }
+        body.light-mode .soctet { background: rgba(255,255,255,0.98); border-color: rgba(30,43,59,0.12); }
+        body.light-mode .subnet-inner { background: rgba(255,255,255,0.98); border-color: rgba(30,43,59,0.10); }
+        body.light-mode .sbar-wrap { background: rgba(30,43,59,0.06); border-color: rgba(30,43,59,0.10); }
+        body.light-mode .sbit.sbit-net { color: #06101f; }
+        body.light-mode .sbit.sbit-host { color: #06101f; }
+        body.light-mode .soctet-val { color: #1e2b3b; }
+        body.light-mode .soctet-hex { color: #56657a; }
+        /* ── end subnet visual ───────────────────────────────────── */
+
+        body.muthur-mode {
+            color: var(--muthur-green);
+            background: radial-gradient(circle at top left, rgba(122,240,66,0.08), transparent 28%), linear-gradient(180deg, #020402 0%, var(--muthur-bg) 100%);
+        }
+
+        body.muthur-mode .topbar, body.muthur-mode .card {
+            background: linear-gradient(180deg, rgba(122,240,66,0.04), rgba(122,240,66,0.02));
+            border-color: var(--muthur-border);
+            box-shadow: 0 0 0 1px rgba(122,240,66,0.08), 0 18px 40px rgba(0,0,0,0.45);
+        }
+
+        body.muthur-mode p, body.muthur-mode label, body.muthur-mode .message,
+        body.muthur-mode .mini span, body.muthur-mode .result small, body.muthur-mode .explanation,
+        body.muthur-mode .explanation ol, body.muthur-mode .explanation ul,
+        body.muthur-mode .muted-label, body.muthur-mode .bit-top, body.muthur-mode .bit-bottom,
+        body.muthur-mode .stat-label, body.muthur-mode .info-card li { color: rgba(173,255,143,0.9); }
+
+        body.muthur-mode input, body.muthur-mode .mini, body.muthur-mode .result,
+        body.muthur-mode .message, body.muthur-mode .explanation, body.muthur-mode .chip,
+        body.muthur-mode button.secondary, body.muthur-mode .info-card, body.muthur-mode .bit-cell,
+        body.muthur-mode .challenge-box, body.muthur-mode .section-block, body.muthur-mode .stat-chip {
+            background: var(--muthur-panel);
+            border-color: var(--muthur-border);
+            color: var(--muthur-green);
+            box-shadow: inset 0 0 20px rgba(122,240,66,0.03), 0 0 16px rgba(122,240,66,0.05);
+        }
+
+        body.muthur-mode .info-card::before { background: linear-gradient(90deg, rgba(122,240,66,0.95), rgba(173,255,143,0.85)); }
+
+        body.muthur-mode input:focus { border-color: rgba(122,240,66,0.55); box-shadow: 0 0 0 3px rgba(122,240,66,0.14), 0 0 18px rgba(122,240,66,0.10); }
+
+        body.muthur-mode h1, body.muthur-mode h2, body.muthur-mode h3,
+        body.muthur-mode strong, body.muthur-mode .chip, body.muthur-mode #statusMessage,
+        body.muthur-mode .nav-btn { color: var(--muthur-green); text-shadow: 0 0 8px rgba(122,240,66,0.18); }
+
+        body.muthur-mode h1::after, body.muthur-mode #statusMessage::after { content: "█"; display: inline-block; margin-left: 8px; color: var(--muthur-green); animation: blinkCursor 0.9s steps(1, end) infinite; }
+
+        body.muthur-mode button { background: linear-gradient(180deg, #9cff67, #71d43e); color: #041004; box-shadow: 0 0 18px rgba(122,240,66,0.18); }
+        body.muthur-mode .scanlines { background: repeating-linear-gradient(180deg, rgba(122,240,66,0.06) 0px, rgba(122,240,66,0.06) 1px, transparent 2px, transparent 6px); }
+        body.muthur-mode .nav-btn.active, body.muthur-mode .nav-btn:hover { background: rgba(122,240,66,0.14); border-color: var(--muthur-border); }
+
+        @keyframes pulseError { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
+        @keyframes floatNum { 0% { transform: translate3d(0,0,0) rotate(0deg); opacity: 0; } 12% { opacity: 0.65; } 55% { transform: translate3d(18px,-55vh,0) rotate(2deg); opacity: 0.95; } 100% { transform: translate3d(-14px,-120vh,0) rotate(-3deg); opacity: 0; } }
+        @keyframes twinkle { from { opacity: 0.22; } to { opacity: 0.46; } }
+        @keyframes scanDrift { from { transform: translateY(0); } to { transform: translateY(10px); } }
+        @keyframes blinkCursor { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+
+        @media (max-width: 980px) {
+            .systems-layout { grid-template-columns: 1fr; }
+            .info-row { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 900px) {
+            .grid, .results, .challenge-stats { grid-template-columns: 1fr; }
+            .topbar { top: 8px; }
+            .toolbar-right { margin-left: 0; width: 100%; }
+            .soctet-row { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 500px) {
+            .soctet-row { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="nostromo-bg" aria-hidden="true">
+        <div class="starfield"></div>
+        <div class="glowfog"></div>
+        <div class="numbers-layer" id="numbersLayer"></div>
+        <div class="scanlines"></div>
+    </div>
+    <div class="boot-overlay" id="bootOverlay" aria-hidden="true">
+        <div class="boot-screen">
+            <div class="boot-title terminal-cursor">MU/TH/UR 6000 INTERFACE</div>
+            <span class="boot-line" id="bootLine1"></span>
+            <span class="boot-line" id="bootLine2"></span>
+            <span class="boot-line" id="bootLine3"></span>
+            <span class="boot-line" id="bootLine4"></span>
+        </div>
+    </div>
+    <main class="content">
+        <nav class="topbar">
+            <button class="nav-btn active" data-tab="soustavy" data-i18n="nav_systems">Soustavy</button>
+            <button class="nav-btn" data-tab="ip" data-i18n="nav_ip">IP adresy</button>
+            <button class="nav-btn" data-tab="barvy" data-i18n="nav_colors">Barvy</button>
+            <div class="toolbar-right">
+                <button class="nav-btn" id="langToggle" type="button">EN</button>
+                <button class="nav-btn" id="themeToggle" type="button">Light mode</button>
+            </div>
+        </nav>
+        <section class="card hero">
+            <h1 data-i18n="hero_title">Digitální převodník</h1>
+            <p data-i18n="hero_text">Jedna stránka pro převody číselných soustav, pochopení IP adres a zápis barev pomocí hexadecimálního kódu.</p>
+            <div class="grid">
+                <div class="mini"><strong data-i18n="nav_systems">Soustavy</strong><span data-i18n="hero_systems">Binární, decimální a hexadecimální převod s limitem do 32 bitů.</span></div>
+                <div class="mini"><strong data-i18n="nav_ip">IP adresy</strong><span data-i18n="hero_ip">IPv4, binární zápis, maska, prefix, síťová a broadcast adresa.</span></div>
+                <div class="mini"><strong data-i18n="nav_colors">Barvy</strong><span data-i18n="hero_colors">Zápis RGB a HEX, binární kanály a náhled výsledné barvy.</span></div>
+            </div>
+        </section>
+        <section id="soustavy" class="tab-panel active">
+            <div class="card panel">
+                <h2 data-i18n="systems_title">Převod mezi soustavami</h2>
+                <p data-i18n="systems_intro">Zadej číslo do binární, decimální nebo hexadecimální soustavy. Limit je 32 bitů, tedy maximálně 4294967295.</p>
+                <div class="systems-layout">
+                    <div class="systems-main">
+                        <div class="section-block">
+                            <strong data-i18n="howto">Jak postupovat</strong>
+                            <p data-i18n="systems_flow_intro">Nejdřív zadej hodnotu do jednoho pole, potom si přečti výstup a nakonec se podívej na rozklad a challenge.</p>
+                        </div>
+                        <div class="section-block">
+                            <div class="converter">
+                                <div class="field"><label for="binaryInput" data-i18n="label_binary">Binární číslo</label><input id="binaryInput" type="text" maxlength="32" placeholder="např. 101101" autocomplete="off" /></div>
+                                <div class="field"><label for="decimalInput" data-i18n="label_decimal">Decimální číslo</label><input id="decimalInput" type="text" maxlength="10" placeholder="např. 45" autocomplete="off" /></div>
+                                <div class="field"><label for="hexInput" data-i18n="label_hex">Hexadecimální číslo</label><input id="hexInput" type="text" maxlength="8" placeholder="např. 2D" autocomplete="off" /></div>
+                            </div>
+                            <div class="btn-row">
+                                <button id="clearBtn" data-i18n="btn_clear">Vymazat</button>
+                                <button id="exampleBtn" class="secondary" data-i18n="btn_example">Ukázka</button>
+                            </div>
+                            <div class="examples">
+                                <div class="chip" data-example-type="bin" data-example-value="101010">Binární: 101010</div>
+                                <div class="chip" data-example-type="dec" data-example-value="255">Decimální: 255</div>
+                                <div class="chip" data-example-type="hex" data-example-value="7B">Hex: 7B</div>
+                            </div>
+                        </div>
+                        <div class="results">
+                            <div class="result"><small data-i18n="out_binary">Binární výstup</small><strong id="binaryOutput" class="value-wrap">—</strong></div>
+                            <div class="result"><small data-i18n="out_decimal">Decimální výstup</small><strong id="decimalOutput" class="value-wrap">—</strong></div>
+                            <div class="result"><small data-i18n="out_hex">Hexadecimální výstup</small><strong id="hexOutput" class="value-wrap">—</strong></div>
+                        </div>
+                        <div class="message" id="statusMessage">Začni zadáním čísla do libovolného pole.</div>
+                        <div class="message" id="limitMessage" style="display:none;">—</div>
+                        <div class="section-block">
+                            <strong data-i18n="binary_break_title">Rozklad binárního čísla</strong>
+                            <p data-i18n="binary_break_intro">Tady uvidíš, jak jednotlivé bity přispívají k výsledné decimální hodnotě.</p>
+                            <div id="bitBreakdown" class="bits-grid"></div>
+                            <div class="message" id="bitSummary">—</div>
+                        </div>
+                    </div>
+                    <div class="systems-side">
+                        <div class="challenge-box" id="challengeBox">
+                            <strong data-i18n="challenge_title">Challenge mód</strong>
+                            <p data-i18n="challenge_intro">Zkus převést náhodné binární číslo do decimální soustavy.</p>
+                            <div class="message" id="challengeQuestion">—</div>
+                            <div class="field" style="margin-top:12px;">
+                                <label for="challengeAnswer" data-i18n="challenge_answer">Tvoje odpověď</label>
+                                <input id="challengeAnswer" type="text" autocomplete="off" />
+                            </div>
+                            <div class="btn-row">
+                                <button id="challengeCheck" data-i18n="challenge_check">Zkontrolovat</button>
+                                <button id="challengeNext" class="secondary" data-i18n="challenge_next">Další příklad</button>
+                            </div>
+                            <div class="message" id="challengeFeedback">—</div>
+                            <div class="challenge-stats">
+                                <div class="stat-chip"><span class="stat-label" data-i18n="challenge_score">Skóre</span><div id="challengeScore" class="stat-value">0</div></div>
+                                <div class="stat-chip"><span class="stat-label" data-i18n="challenge_streak">Streak</span><div id="challengeStreak" class="stat-value">0</div></div>
+                                <div class="stat-chip"><span class="stat-label" data-i18n="challenge_solution">Správně</span><div id="challengeSolution" class="stat-value">—</div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="info-row">
+                    <div class="info-card"><strong data-i18n="howto">Jak postupovat</strong><ul><li data-i18n="systems_how_1">Zadej číslo do jedné soustavy.</li><li data-i18n="systems_how_2">Systém ověří povolené znaky a délku vstupu.</li><li data-i18n="systems_how_3">Vstup se převede na decimální hodnotu.</li><li data-i18n="systems_how_4">Z ní se dopočítá binární i hex zápis.</li></ul></div>
+                    <div class="info-card"><strong data-i18n="brief_expl">Stručné vysvětlení</strong><ul><li data-i18n="systems_expl_1">Binární soustava používá jen 0 a 1.</li><li data-i18n="systems_expl_2">Decimální používá číslice 0 až 9.</li><li data-i18n="systems_expl_3">Hexadecimální používá 0–9 a A–F.</li><li data-i18n="systems_expl_4">Hex je praktický zkrácený zápis binárních dat.</li></ul></div>
+                    <div class="info-card"><strong data-i18n="limits">Limity</strong><ul><li data-i18n="systems_lim_1">Binární vstup: max. 32 znaků.</li><li data-i18n="systems_lim_2">Hex vstup: max. 8 znaků.</li><li data-i18n="systems_lim_3">Decimální vstup: 0 až 4294967295.</li></ul></div>
+                </div>
+                <div class="explanation"><h3 data-i18n="step_title">Postup převodu krok za krokem</h3><ol id="stepsList"></ol></div>
+            </div>
+        </section>
+        <section id="ip" class="tab-panel">
+            <div class="card panel">
+                <h2 data-i18n="ip_title">IP adresy a jak fungují</h2>
+                <p data-i18n="ip_intro">IPv4 adresa má čtyři části oddělené tečkou. Každá část je oktet s hodnotou od 0 do 255.</p>
+                <div class="converter" style="margin-top:18px;">
+                    <div class="field"><label for="ipInput" data-i18n="label_ip">IPv4 adresa</label><input id="ipInput" type="text" placeholder="např. 192.168.1.10" autocomplete="off" /></div>
+                    <div class="field"><label for="maskInput" data-i18n="label_mask">Maska nebo prefix</label><input id="maskInput" type="text" placeholder="např. /24 nebo 255.255.255.0" autocomplete="off" /></div>
+                </div>
+                <div class="btn-row">
+                    <button id="ipConvertBtn" data-i18n="btn_convert_ip">Převést IP</button>
+                    <button id="ipExampleBtn" class="secondary" data-i18n="btn_example">Ukázka</button>
+                </div>
+                <div class="results">
+                    <div class="result"><small data-i18n="ip_octets">Oktety</small><strong id="ipParts" class="value-wrap">—</strong></div>
+                    <div class="result"><small data-i18n="ip_binary">Binární IP</small><strong id="ipBinary" class="value-wrap">—</strong></div>
+                    <div class="result"><small data-i18n="ip_meaning">Co to znamená</small><strong id="ipMeaning" class="value-wrap">—</strong></div>
+                </div>
+                <div class="results">
+                    <div class="result"><small data-i18n="ip_prefix">Prefix</small><strong id="ipPrefixOut" class="value-wrap">—</strong></div>
+                    <div class="result"><small data-i18n="ip_network">Adresa sítě</small><strong id="ipNetworkOut" class="value-wrap">—</strong></div>
+                    <div class="result"><small data-i18n="ip_broadcast">Broadcast</small><strong id="ipBroadcastOut" class="value-wrap">—</strong></div>
+                </div>
+
+                <!-- Subnet visual -->
+                <div id="subnetVisual" style="display:none;">
+                    <div class="subnet-inner">
+                        <strong id="subnetVisualTitle">Vizualizace masky podsítě</strong>
+                        <p id="subnetVisualDesc" style="margin-bottom:14px;">Modré bity patří síti, zelené bity patří hostům.</p>
+                        <div class="soctet-row" id="subnetOctets"></div>
+                        <div class="sbar-wrap" id="subnetBar">
+                            <div class="sbar-net" id="sbarNet" style="width:75%"><span class="sbar-label" id="sbarNetLabel">Síť /24</span></div>
+                            <div class="sbar-host" id="sbarHost"><span class="sbar-label" id="sbarHostLabel">Host 8 bitů</span></div>
+                        </div>
+                        <div class="slegend">
+                            <div class="slegend-item"><div class="slegend-dot net"></div><span id="slegendNet">Síťová část</span></div>
+                            <div class="slegend-item"><div class="slegend-dot host"></div><span id="slegendHost">Host část</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-block" style="margin-top:18px;"><strong data-i18n="ip_range_title">Rozsah a hosté</strong>
+                    <div class="results">
+                        <div class="result"><small data-i18n="ip_range">Rozsah hostů</small><strong id="ipHostRange" class="value-wrap range-line">—</strong></div>
+                        <div class="result"><small data-i18n="ip_count">Počet hostů</small><strong id="ipHostCount" class="value-wrap">—</strong></div>
+                        <div class="result"><small data-i18n="ip_total">Počet adres</small><strong id="ipTotalCount" class="value-wrap">—</strong></div>
+                    </div>
+                </div>
+                <div class="info-row">
+                    <div class="info-card"><strong data-i18n="howto">Jak postupovat</strong><ul><li data-i18n="ip_how_1">Rozděl IP podle teček.</li><li data-i18n="ip_how_2">Zkontroluj 4 oktety v rozsahu 0–255.</li><li data-i18n="ip_how_3">Převeď každý oktet na 8 bitů.</li><li data-i18n="ip_how_4">Z masky zjisti prefix.</li><li data-i18n="ip_how_5">Spočítej síť a broadcast.</li></ul></div>
+                    <div class="info-card"><strong data-i18n="brief_expl">Stručné vysvětlení</strong><ul><li data-i18n="ip_expl_1">IPv4 má 32 bitů rozdělených do 4 oktetů.</li><li data-i18n="ip_expl_2">Maska říká, která část je síť a která host.</li><li data-i18n="ip_expl_3">Prefix /24 znamená, že prvních 24 bitů patří síti.</li></ul></div>
+                    <div class="info-card"><strong data-i18n="examples">Příklady</strong><ul><li>192.168.1.10 /24</li><li>10.0.0.15 /8</li><li>172.16.5.100 255.255.255.0</li></ul></div>
+                </div>
+                <div class="explanation"><h3 data-i18n="step_title">Postup převodu krok za krokem</h3><ol id="ipSteps"></ol></div>
+            </div>
+        </section>
+        <section id="barvy" class="tab-panel">
+            <div class="card panel">
+                <h2 data-i18n="colors_title">Barvy pomocí soustav</h2>
+                <p data-i18n="colors_intro">Na webu se barvy zapisují jako HEX ve tvaru #RRGGBB. Každý kanál má hodnotu 0 až 255, tedy 00 až FF v hexu.</p>
+                <div class="converter" style="margin-top:18px;">
+                    <div class="field"><label for="hexColorInput" data-i18n="label_hex_color">HEX barva</label><input id="hexColorInput" type="text" maxlength="7" placeholder="#2A7FFF" value="#" autocomplete="off" /></div>
+                    <div class="field"><label for="rgbInput" data-i18n="label_rgb">RGB hodnoty</label><input id="rgbInput" type="text" placeholder="např. 42,127,255" autocomplete="off" /></div>
+                </div>
+                <div class="btn-row">
+                    <button id="colorConvertBtn" data-i18n="btn_convert_color">Převést barvu</button>
+                    <button id="colorExampleBtn" class="secondary" data-i18n="btn_example">Ukázka</button>
+                </div>
+                <div class="results">
+                    <div class="result"><small data-i18n="out_hex">Hexadecimální výstup</small><strong id="colorHexOut" class="value-wrap">—</strong></div>
+                    <div class="result"><small data-i18n="out_rgb">RGB</small><strong id="colorRgbOut" class="value-wrap">—</strong></div>
+                    <div class="result"><small data-i18n="out_binary_short">Binárně</small><strong id="colorBinOut" class="value-wrap">—</strong></div>
+                </div>
+                <div class="swatch" id="colorSwatch"></div>
+                <div class="info-row">
+                    <div class="info-card"><strong data-i18n="howto">Jak postupovat</strong><ul><li data-i18n="colors_how_1">Zadej HEX nebo RGB.</li><li data-i18n="colors_how_2">Každý kanál se převede mezi 0–255 a 00–FF.</li><li data-i18n="colors_how_3">Ze tří kanálů vznikne výsledná barva.</li></ul></div>
+                    <div class="info-card"><strong data-i18n="examples">Příklady</strong><ul><li>#FF0000 = červená</li><li>#00FF00 = zelená</li><li>#0000FF = modrá</li></ul></div>
+                    <div class="info-card"><strong data-i18n="brief_expl">Stručné vysvětlení</strong><ul><li data-i18n="colors_expl_1">RR = red</li><li data-i18n="colors_expl_2">GG = green</li><li data-i18n="colors_expl_3">BB = blue</li><li data-i18n="colors_expl_4">Každý pár je hex zápis hodnoty 0–255.</li></ul></div>
+                </div>
+                <div class="explanation"><h3 data-i18n="step_title">Postup převodu krok za krokem</h3><ol id="colorSteps"></ol></div>
+            </div>
+        </section>
+    </main>
+    <script>
+        const MAX_DEC = 4294967295;
+        const MAX_BIN_LEN = 32;
+        const MAX_HEX_LEN = 8;
+
+        const binaryInput = document.getElementById('binaryInput');
+        const decimalInput = document.getElementById('decimalInput');
+        const hexInput = document.getElementById('hexInput');
+        const binaryOutput = document.getElementById('binaryOutput');
+        const decimalOutput = document.getElementById('decimalOutput');
+        const hexOutput = document.getElementById('hexOutput');
+        const statusMessage = document.getElementById('statusMessage');
+        const limitMessage = document.getElementById('limitMessage');
+        const stepsList = document.getElementById('stepsList');
+        const bitBreakdown = document.getElementById('bitBreakdown');
+        const bitSummary = document.getElementById('bitSummary');
+        const challengeBox = document.getElementById('challengeBox');
+        const challengeQuestion = document.getElementById('challengeQuestion');
+        const challengeAnswer = document.getElementById('challengeAnswer');
+        const challengeCheck = document.getElementById('challengeCheck');
+        const challengeNext = document.getElementById('challengeNext');
+        const challengeFeedback = document.getElementById('challengeFeedback');
+        const challengeScore = document.getElementById('challengeScore');
+        const challengeStreak = document.getElementById('challengeStreak');
+        const challengeSolution = document.getElementById('challengeSolution');
+        const bootOverlay = document.getElementById('bootOverlay');
+        const bootLine1 = document.getElementById('bootLine1');
+        const bootLine2 = document.getElementById('bootLine2');
+        const bootLine3 = document.getElementById('bootLine3');
+        const bootLine4 = document.getElementById('bootLine4');
+        const numbersLayer = document.getElementById('numbersLayer');
+        const langToggle = document.getElementById('langToggle');
+        const themeToggle = document.getElementById('themeToggle');
+        const rootStyle = document.documentElement;
+        const ipInput = document.getElementById('ipInput');
+        const maskInput = document.getElementById('maskInput');
+        const ipParts = document.getElementById('ipParts');
+        const ipBinary = document.getElementById('ipBinary');
+        const ipMeaning = document.getElementById('ipMeaning');
+        const ipPrefixOut = document.getElementById('ipPrefixOut');
+        const ipNetworkOut = document.getElementById('ipNetworkOut');
+        const ipBroadcastOut = document.getElementById('ipBroadcastOut');
+        const ipHostRange = document.getElementById('ipHostRange');
+        const ipHostCount = document.getElementById('ipHostCount');
+        const ipTotalCount = document.getElementById('ipTotalCount');
+        const ipSteps = document.getElementById('ipSteps');
+        const hexColorInput = document.getElementById('hexColorInput');
+        const rgbInput = document.getElementById('rgbInput');
+        const colorHexOut = document.getElementById('colorHexOut');
+        const colorRgbOut = document.getElementById('colorRgbOut');
+        const colorBinOut = document.getElementById('colorBinOut');
+        const colorSwatch = document.getElementById('colorSwatch');
+        const colorSteps = document.getElementById('colorSteps');
+        const subnetVisual = document.getElementById('subnetVisual');
+        const subnetOctets = document.getElementById('subnetOctets');
+        const sbarNet = document.getElementById('sbarNet');
+        const sbarHost = document.getElementById('sbarHost');
+        const sbarNetLabel = document.getElementById('sbarNetLabel');
+        const sbarHostLabel = document.getElementById('sbarHostLabel');
+        const subnetVisualTitle = document.getElementById('subnetVisualTitle');
+        const subnetVisualDesc = document.getElementById('subnetVisualDesc');
+        const slegendNet = document.getElementById('slegendNet');
+        const slegendHost = document.getElementById('slegendHost');
+
+        let isUpdating = false;
+        let bootTimeouts = [];
+        let bootPlayed = false;
+        let currentLang = 'cs';
+        let challenge = { bin: '', answer: 0, score: 0, streak: 0 };
+
+        const I18N = {
+            cs: {
+                nav_systems: 'Soustavy', nav_ip: 'IP adresy', nav_colors: 'Barvy',
+                hero_title: 'Digitální převodník',
+                hero_text: 'Jedna stránka pro převody číselných soustav, pochopení IP adres a zápis barev pomocí hexadecimálního kódu.',
+                hero_systems: 'Binární, decimální a hexadecimální převod s limitem do 32 bitů.',
+                hero_ip: 'IPv4, binární zápis, maska, prefix, síťová a broadcast adresa.',
+                hero_colors: 'Zápis RGB a HEX, binární kanály a náhled výsledné barvy.',
+                systems_title: 'Převod mezi soustavami',
+                systems_intro: 'Zadej číslo do binární, decimální nebo hexadecimální soustavy. Limit je 32 bitů, tedy maximálně 4294967295.',
+                systems_flow_intro: 'Nejdřív zadej hodnotu do jednoho pole, potom si přečti výstup a nakonec se podívej na rozklad a challenge.',
+                label_binary: 'Binární číslo', label_decimal: 'Decimální číslo', label_hex: 'Hexadecimální číslo',
+                btn_clear: 'Vymazat', btn_example: 'Ukázka', btn_convert_ip: 'Převést IP', btn_convert_color: 'Převést barvu',
+                out_binary: 'Binární výstup', out_decimal: 'Decimální výstup', out_hex: 'Hexadecimální výstup',
+                out_rgb: 'RGB', out_binary_short: 'Binárně',
+                howto: 'Jak postupovat', brief_expl: 'Stručné vysvětlení', limits: 'Limity', examples: 'Příklady',
+                systems_how_1: 'Zadej číslo do jedné soustavy.', systems_how_2: 'Systém ověří povolené znaky a délku vstupu.',
+                systems_how_3: 'Vstup se převede na decimální hodnotu.', systems_how_4: 'Z ní se dopočítá binární i hex zápis.',
+                systems_expl_1: 'Binární soustava používá jen 0 a 1.', systems_expl_2: 'Decimální používá číslice 0 až 9.',
+                systems_expl_3: 'Hexadecimální používá 0–9 a A–F.', systems_expl_4: 'Hex je praktický zkrácený zápis binárních dat.',
+                systems_lim_1: 'Binární vstup: max. 32 znaků.', systems_lim_2: 'Hex vstup: max. 8 znaků.',
+                systems_lim_3: 'Decimální vstup: 0 až 4294967295.',
+                step_title: 'Postup převodu krok za krokem',
+                binary_break_title: 'Rozklad binárního čísla',
+                binary_break_intro: 'Tady uvidíš, jak jednotlivé bity přispívají k výsledné decimální hodnotě.',
+                bit_sum_empty: 'Zadej nebo převeď nějaké binární číslo a tady se ukáže rozklad.',
+                bit_sum_prefix: 'Součet aktivních bitů:',
+                challenge_title: 'Challenge mód', challenge_intro: 'Zkus převést náhodné binární číslo do decimální soustavy.',
+                challenge_answer: 'Tvoje odpověď', challenge_check: 'Zkontrolovat', challenge_next: 'Další příklad',
+                challenge_score: 'Skóre', challenge_streak: 'Streak', challenge_solution: 'Správně',
+                challenge_q: 'Převeď do decimální soustavy:',
+                challenge_ok: 'Správně! Dobrá práce.', challenge_bad: 'Tentokrát ne. Zkus další příklad.',
+                challenge_need_number: 'Zadej celé číslo.',
+                ip_title: 'IP adresy a jak fungují',
+                ip_intro: 'IPv4 adresa má čtyři části oddělené tečkou. Každá část je oktet s hodnotou od 0 do 255.',
+                label_ip: 'IPv4 adresa', label_mask: 'Maska nebo prefix',
+                ip_octets: 'Oktety', ip_binary: 'Binární IP', ip_meaning: 'Co to znamená',
+                ip_prefix: 'Prefix', ip_network: 'Adresa sítě', ip_broadcast: 'Broadcast',
+                ip_range_title: 'Rozsah a hosté', ip_range: 'Rozsah hostů', ip_count: 'Počet hostů', ip_total: 'Počet adres',
+                ip_how_1: 'Rozděl IP podle teček.', ip_how_2: 'Zkontroluj 4 oktety v rozsahu 0–255.',
+                ip_how_3: 'Převeď každý oktet na 8 bitů.', ip_how_4: 'Z masky zjisti prefix.',
+                ip_how_5: 'Spočítej síť a broadcast.',
+                ip_expl_1: 'IPv4 má 32 bitů rozdělených do 4 oktetů.',
+                ip_expl_2: 'Maska říká, která část je síť a která host.',
+                ip_expl_3: 'Prefix /24 znamená, že prvních 24 bitů patří síti.',
+                colors_title: 'Barvy pomocí soustav',
+                colors_intro: 'Na webu se barvy zapisují jako HEX ve tvaru #RRGGBB. Každý kanál má hodnotu 0 až 255.',
+                label_hex_color: 'HEX barva', label_rgb: 'RGB hodnoty',
+                colors_how_1: 'Zadej HEX nebo RGB.', colors_how_2: 'Každý kanál se převede mezi 0–255 a 00–FF.',
+                colors_how_3: 'Ze tří kanálů vznikne výsledná barva.',
+                colors_expl_1: 'RR = red', colors_expl_2: 'GG = green', colors_expl_3: 'BB = blue',
+                colors_expl_4: 'Každý pár je hex zápis hodnoty 0–255.',
+                start: 'Začni zadáním čísla do libovolného pole.', converted_ok: 'Převod proběhl úspěšně.',
+                limitBin: 'Narazil jsi na limit 32 bitů. Dál už vstup nepůjde.',
+                limitDec: 'Narazil jsi na maximální délku desetinného vstupu.',
+                limitHex: 'Narazil jsi na limit 8 hex znaků.',
+                limitColor: 'Narazil jsi na limit pro HEX barvu.',
+                maskTyping: 'Maska se ještě dopisuje, zatím to není chyba.',
+                maskSteps: [
+                    'IP adresa může být správně, ale maska ještě není dopsaná.',
+                    'Pokračuj třeba na /24 nebo 255.255.255.0.',
+                    'Síť a broadcast se spočítají až po dokončení masky.'
+                ],
+                light: 'Light mode', dark: 'Dark mode', error_word: 'Chyba', special_range: 'Speciální rozsah',
+                subnet_title: 'Vizualizace masky podsítě',
+                subnet_desc: 'Modré bity patří síti, zelené bity patří hostům.',
+                subnet_net: 'Síťová část',
+                subnet_host: 'Host část',
+            },
+            en: {
+                nav_systems: 'Systems', nav_ip: 'IP addresses', nav_colors: 'Colors',
+                hero_title: 'Digital Converter',
+                hero_text: 'One page for number-system conversions, understanding IP addresses, and writing colors using hexadecimal notation.',
+                hero_systems: 'Binary, decimal, and hexadecimal conversion with a 32-bit limit.',
+                hero_ip: 'IPv4, binary notation, mask, prefix, network and broadcast address.',
+                hero_colors: 'RGB and HEX notation, binary channels, and a live color preview.',
+                systems_title: 'Number system conversion',
+                systems_intro: 'Enter a number in binary, decimal, or hexadecimal. The limit is 32 bits, which means a maximum of 4294967295.',
+                systems_flow_intro: 'First enter a value into one field, then read the output, and finally check the breakdown and challenge.',
+                label_binary: 'Binary number', label_decimal: 'Decimal number', label_hex: 'Hexadecimal number',
+                btn_clear: 'Clear', btn_example: 'Example', btn_convert_ip: 'Convert IP', btn_convert_color: 'Convert color',
+                out_binary: 'Binary output', out_decimal: 'Decimal output', out_hex: 'Hexadecimal output',
+                out_rgb: 'RGB', out_binary_short: 'Binary',
+                howto: 'How to use it', brief_expl: 'Brief explanation', limits: 'Limits', examples: 'Examples',
+                systems_how_1: 'Enter a number in one system.', systems_how_2: 'The system checks allowed characters and input length.',
+                systems_how_3: 'The value is converted to decimal.', systems_how_4: 'Then the binary and hexadecimal forms are calculated.',
+                systems_expl_1: 'Binary uses only 0 and 1.', systems_expl_2: 'Decimal uses digits 0 to 9.',
+                systems_expl_3: 'Hexadecimal uses 0–9 and A–F.', systems_expl_4: 'Hex is a practical shortened way to write binary data.',
+                systems_lim_1: 'Binary input: max 32 characters.', systems_lim_2: 'Hex input: max 8 characters.',
+                systems_lim_3: 'Decimal input: 0 to 4294967295.',
+                step_title: 'Step-by-step process',
+                binary_break_title: 'Binary breakdown',
+                binary_break_intro: 'Here you can see how individual bits contribute to the final decimal value.',
+                bit_sum_empty: 'Type or convert a binary number and the breakdown will appear here.',
+                bit_sum_prefix: 'Sum of active bits:',
+                challenge_title: 'Challenge mode', challenge_intro: 'Try converting a random binary number into decimal.',
+                challenge_answer: 'Your answer', challenge_check: 'Check', challenge_next: 'Next example',
+                challenge_score: 'Score', challenge_streak: 'Streak', challenge_solution: 'Correct',
+                challenge_q: 'Convert to decimal:',
+                challenge_ok: 'Correct! Nice job.', challenge_bad: 'Not this time. Try another one.',
+                challenge_need_number: 'Enter an integer.',
+                ip_title: 'IP addresses and how they work',
+                ip_intro: 'An IPv4 address has four parts separated by dots. Each part is an octet with a value from 0 to 255.',
+                label_ip: 'IPv4 address', label_mask: 'Mask or prefix',
+                ip_octets: 'Octets', ip_binary: 'Binary IP', ip_meaning: 'Meaning',
+                ip_prefix: 'Prefix', ip_network: 'Network address', ip_broadcast: 'Broadcast',
+                ip_range_title: 'Range and hosts', ip_range: 'Host range', ip_count: 'Hosts', ip_total: 'Total addresses',
+                ip_how_1: 'Split the IP by dots.', ip_how_2: 'Check 4 octets in the 0–255 range.',
+                ip_how_3: 'Convert each octet to 8 bits.', ip_how_4: 'Get the prefix from the mask.',
+                ip_how_5: 'Calculate network and broadcast.',
+                ip_expl_1: 'IPv4 has 32 bits split into 4 octets.',
+                ip_expl_2: 'The mask tells you which part is network and which is host.',
+                ip_expl_3: 'A /24 prefix means the first 24 bits belong to the network.',
+                colors_title: 'Colors using number systems',
+                colors_intro: 'On the web, colors are often written as HEX in the form #RRGGBB. Each channel has a value from 0 to 255.',
+                label_hex_color: 'HEX color', label_rgb: 'RGB values',
+                colors_how_1: 'Enter HEX or RGB.', colors_how_2: 'Each channel is converted between 0–255 and 00–FF.',
+                colors_how_3: 'The three channels form the final color.',
+                colors_expl_1: 'RR = red', colors_expl_2: 'GG = green', colors_expl_3: 'BB = blue',
+                colors_expl_4: 'Each pair is the hex form of a 0–255 value.',
+                start: 'Start by typing a value into any field.', converted_ok: 'Conversion completed successfully.',
+                limitBin: 'You reached the 32-bit limit. You cannot type more.',
+                limitDec: 'You reached the maximum decimal input length.',
+                limitHex: 'You reached the 8-character hex limit.',
+                limitColor: 'You reached the HEX color limit.',
+                maskTyping: 'The mask is still being typed, this is not an error yet.',
+                maskSteps: [
+                    'The IP may already be valid, but the mask is not complete yet.',
+                    'Keep typing, for example /24 or 255.255.255.0.',
+                    'Network and broadcast will be calculated once the mask is complete.'
+                ],
+                light: 'Light mode', dark: 'Dark mode', error_word: 'Error', special_range: 'Special range',
+                subnet_title: 'Subnet mask visualization',
+                subnet_desc: 'Blue bits belong to the network, green bits belong to hosts.',
+                subnet_net: 'Network part',
+                subnet_host: 'Host part',
+            }
+        };
+
+        function tr(key) { return I18N[currentLang][key] || key; }
+
+        function setOutputs(bin, dec, hex) {
+            binaryOutput.textContent = bin || '—';
+            decimalOutput.textContent = dec || '—';
+            hexOutput.textContent = hex || '—';
+        }
+
+        function setList(el, items) {
+            el.innerHTML = items.map(item => `<li>${item}</li>`).join('');
+        }
+
+        function clearInputErrors() {
+            [binaryInput, decimalInput, hexInput, ipInput, maskInput, hexColorInput, rgbInput, challengeAnswer]
+                .forEach(el => el.classList.remove('error'));
+        }
+
+        function toByteBinary(n) { return Number(n).toString(2).padStart(8, '0'); }
+
+        function ipToInt(nums) {
+            return (((nums[0] << 24) >>> 0) + ((nums[1] << 16) >>> 0) + ((nums[2] << 8) >>> 0) + (nums[3] >>> 0)) >>> 0;
+        }
+
+        function intToIp(int) {
+            return [(int >>> 24) & 255, (int >>> 16) & 255, (int >>> 8) & 255, int & 255].join('.');
+        }
+
+        function clearBootTimers() { bootTimeouts.forEach(id => clearTimeout(id)); bootTimeouts = []; }
+
+        function hideBootOverlay() {
+            clearBootTimers();
+            bootOverlay.classList.remove('active');
+            bootLine1.textContent = ''; bootLine2.textContent = '';
+            bootLine3.textContent = ''; bootLine4.textContent = '';
+            bootPlayed = false;
+        }
+
+        function playBootSequence() {
+            if (bootPlayed) return;
+            bootPlayed = true;
+            clearBootTimers();
+            bootOverlay.classList.add('active');
+            bootTimeouts.push(setTimeout(() => bootLine1.textContent = 'INITIALIZING COMMERCIAL TOW VEHICLE INTERFACE...', 120));
+            bootTimeouts.push(setTimeout(() => bootLine2.textContent = 'LOADING SPECIAL ORDER PRIORITY CHANNELS...', 460));
+            bootTimeouts.push(setTimeout(() => bootLine3.textContent = 'AUTHORIZATION ACCEPTED: NOSTROMO', 820));
+            bootTimeouts.push(setTimeout(() => bootLine4.textContent = 'WELCOME, TEACHER BUBÍLEK.', 1180));
+            bootTimeouts.push(setTimeout(() => bootOverlay.classList.remove('active'), 1900));
+        }
+
+        function setDefaultStatus() {
+            statusMessage.classList.remove('error', 'warning');
+            statusMessage.textContent = tr('start');
+        }
+
+        function setLimitMessage(text, type = 'warning') {
+            limitMessage.style.display = text ? 'block' : 'none';
+            limitMessage.classList.remove('error', 'warning');
+            if (text) limitMessage.classList.add(type);
+            limitMessage.textContent = text || '';
+        }
+
+        function renderBitBreakdown(binaryValue) {
+            if (!binaryValue || !/^[01]+$/.test(binaryValue)) {
+                bitBreakdown.innerHTML = '';
+                bitSummary.textContent = tr('bit_sum_empty');
+                return;
+            }
+            const bits = binaryValue.split('');
+            const terms = [];
+            bitBreakdown.innerHTML = bits.map((bit, index) => {
+                const power = bits.length - index - 1;
+                const value = bit === '1' ? 2 ** power : 0;
+                if (bit === '1') terms.push(value);
+                return `<div class="bit-cell"><div class="bit-top">2^${power}</div><div class="bit-mid">${bit}</div><div class="bit-bottom">${value}</div></div>`;
+            }).join('');
+            bitSummary.textContent = terms.length
+                ? `${tr('bit_sum_prefix')} ${terms.join(' + ')} = ${terms.reduce((a, b) => a + b, 0)}`
+                : `${tr('bit_sum_prefix')} 0`;
+        }
+
+        /* ── Subnet visual ─────────────────────────────────────────── */
+        function renderSubnetVisual(prefix, nums, maskInt) {
+            subnetVisual.style.display = 'block';
+
+            // Update text labels
+            subnetVisualTitle.textContent = tr('subnet_title');
+            subnetVisualDesc.textContent = tr('subnet_desc');
+            slegendNet.textContent = tr('subnet_net');
+            slegendHost.textContent = tr('subnet_host');
+
+            const octetNames = ['Oktet 1', 'Oktet 2', 'Oktet 3', 'Oktet 4'];
+
+            // Build octet boxes
+            subnetOctets.innerHTML = nums.map((n, oi) => {
+                const bits = n.toString(2).padStart(8, '0');
+                const globalStart = oi * 8;
+                const globalEnd = globalStart + 7;
+
+                // Determine octet class
+                let octetClass = '';
+                if (globalEnd < prefix) octetClass = 'octet-full-net';
+                else if (globalStart >= prefix) octetClass = 'octet-full-host';
+                else octetClass = 'octet-split';
+
+                const bitsHtml = bits.split('').map((bit, bi) => {
+                    const globalBit = globalStart + bi;
+                    const isNet = globalBit < prefix;
+                    // Mark the boundary bit on the right edge
+                    const isBoundary = (globalBit === prefix - 1);
+                    return `<span class="sbit ${isNet ? 'sbit-net' : 'sbit-host'}${isBoundary ? ' sbit-boundary-right' : ''}">${bit}</span>`;
+                }).join('');
+
+                return `<div class="soctet ${octetClass}">
+                    <div class="soctet-header">
+                        <span class="soctet-val">${n}</span>
+                        <span class="soctet-hex">${n.toString(16).toUpperCase().padStart(2,'0')}h</span>
+                    </div>
+                    <div class="soctet-bits-wrap">${bitsHtml}</div>
+                </div>`;
+            }).join('');
+
+            // Bar proportions
+            const netPct = (prefix / 32) * 100;
+            const hostPct = 100 - netPct;
+            sbarNet.style.width = netPct + '%';
+            const netLabelCS = `Síť /${prefix} · ${prefix} bitů`;
+            const netLabelEN = `Network /${prefix} · ${prefix} bits`;
+            const hostLabelCS = `Host · ${32 - prefix} bitů`;
+            const hostLabelEN = `Host · ${32 - prefix} bits`;
+            sbarNetLabel.textContent = currentLang === 'cs' ? netLabelCS : netLabelEN;
+            sbarHostLabel.textContent = currentLang === 'cs' ? hostLabelCS : hostLabelEN;
+        }
+
+        function hideSubnetVisual() {
+            subnetVisual.style.display = 'none';
+        }
+        /* ── end subnet visual ─────────────────────────────────────── */
+
+        function newChallenge() {
+            const len = randomInt(5, 8);
+            const bin = Array.from({ length: len }, (_, i) => i === 0 ? '1' : (Math.random() > 0.5 ? '1' : '0')).join('');
+            challenge.bin = bin;
+            challenge.answer = parseInt(bin, 2);
+            challengeQuestion.textContent = `${tr('challenge_q')} ${bin}`;
+            challengeAnswer.value = '';
+            challengeFeedback.textContent = '—';
+            challengeSolution.textContent = '—';
+            challengeBox.classList.remove('good', 'bad');
+        }
+
+        function checkChallenge() {
+            const guess = challengeAnswer.value.trim();
+            if (!/^\d+$/.test(guess)) {
+                challengeFeedback.textContent = tr('challenge_need_number');
+                challengeAnswer.classList.add('error');
+                challengeBox.classList.add('bad');
+                return;
+            }
+            challengeAnswer.classList.remove('error');
+            if (Number(guess) === challenge.answer) {
+                challenge.score += 1;
+                challenge.streak += 1;
+                challengeFeedback.textContent = tr('challenge_ok');
+                challengeBox.classList.remove('bad');
+                challengeBox.classList.add('good');
+            } else {
+                challenge.streak = 0;
+                challengeFeedback.textContent = tr('challenge_bad');
+                challengeBox.classList.remove('good');
+                challengeBox.classList.add('bad');
+            }
+            challengeScore.textContent = String(challenge.score);
+            challengeStreak.textContent = String(challenge.streak);
+            challengeSolution.textContent = String(challenge.answer);
+        }
+
+        function setDefaultSteps() {
+            setList(stepsList, currentLang === 'cs' ? [
+                'Nejdřív se zjistí, do kterého pole jsi zadal hodnotu.',
+                'Podle typu pole se zkontrolují povolené znaky a maximální délka.',
+                'Vstup se převede na jednu společnou hodnotu v decimální soustavě.',
+                'Z decimální hodnoty se spočítá binární zápis.',
+                'Ze stejné hodnoty se spočítá i hexadecimální zápis.',
+                'Výsledky se vypíšou do karet a automaticky zalomí, aby nepřetékaly.'
+            ] : [
+                'First, the app detects which field you typed into.',
+                'Then it checks allowed characters and maximum input length.',
+                'The value is converted into a shared decimal value.',
+                'From that decimal value, the binary notation is calculated.',
+                'The hexadecimal notation is also calculated from the same value.',
+                'Finally, the results are written into cards and wrapped so they never overflow.'
+            ]);
+            setList(ipSteps, currentLang === 'cs' ? [
+                'IP adresa se rozdělí na 4 části podle teček.',
+                'Každý oktet se ověří, že je to celé číslo od 0 do 255.',
+                'Každý oktet se převede do binárního tvaru na přesně 8 bitů.',
+                'Z masky nebo prefixu se určí, kolik bitů patří síti.',
+                'Pomocí bitové operace AND se spočítá síťová adresa.',
+                'Pomocí převrácené masky se spočítá broadcast adresa.'
+            ] : [
+                'The IP address is split into 4 parts using dots.',
+                'Each octet is checked to make sure it is an integer from 0 to 255.',
+                'Each octet is converted into an 8-bit binary form.',
+                'The mask or prefix determines how many bits belong to the network.',
+                'A bitwise AND operation calculates the network address.',
+                'The inverted mask is used to calculate the broadcast address.'
+            ]);
+            setList(colorSteps, currentLang === 'cs' ? [
+                'HEX kód se vezme ve tvaru #RRGGBB.',
+                'Odstraní se znak # a zbytek se rozdělí na RR, GG a BB.',
+                'Každá dvojice se převede z hexu do decimální hodnoty 0–255.',
+                'Tyto tři hodnoty vytvoří RGB zápis barvy.',
+                'Každý RGB kanál se dá zapsat i binárně jako 8 bitů.'
+            ] : [
+                'The HEX code is taken in the form #RRGGBB.',
+                'The # sign is ignored and the rest is split into RR, GG, and BB.',
+                'Each pair is converted from hex into a decimal value from 0 to 255.',
+                'Those three values create the RGB color notation.',
+                'Each RGB channel can also be written in binary as 8 bits.'
+            ]);
+            renderBitBreakdown(binaryOutput.textContent !== '—' ? binaryOutput.textContent : '');
+            if (!challenge.bin) newChallenge();
+            else challengeQuestion.textContent = `${tr('challenge_q')} ${challenge.bin}`;
+        }
+
+        function applyTranslations() {
+            document.documentElement.lang = currentLang;
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.dataset.i18n;
+                if (I18N[currentLang][key]) el.textContent = I18N[currentLang][key];
+            });
+            langToggle.textContent = currentLang === 'cs' ? 'EN' : 'CZ';
+            themeToggle.textContent = document.body.classList.contains('light-mode') ? tr('dark') : tr('light');
+            setDefaultStatus();
+            setDefaultSteps();
+        }
+
+        function clearAllBase() {
+            isUpdating = true;
+            binaryInput.value = ''; decimalInput.value = ''; hexInput.value = '';
+            isUpdating = false;
+            clearInputErrors();
+            document.body.classList.remove('numbers-error', 'muthur-mode');
+            setOutputs('', '', '');
+            setDefaultStatus();
+            setLimitMessage('');
+            setDefaultSteps();
+            hideBootOverlay();
+            renderBitBreakdown('');
+        }
+
+        function formatSigned(value, base) {
+            const sign = value < 0 ? '-' : '';
+            const abs = Math.abs(value);
+            return sign + abs.toString(base).toUpperCase();
+        }
+
+        function validateRange(n) {
+            if (!Number.isSafeInteger(n) || n < 0 || n > MAX_DEC)
+                throw new Error(currentLang === 'cs'
+                    ? `Číslo musí být v rozsahu 0 až ${MAX_DEC}.`
+                    : `The number must be in the range 0 to ${MAX_DEC}.`);
+        }
+
+        function attachLimitWarning(input, maxLen, csText, enText) {
+            input.addEventListener('input', () => {
+                if (input.value.length >= maxLen) setLimitMessage(currentLang === 'cs' ? csText : enText, 'warning');
+                else if (limitMessage.classList.contains('warning')) setLimitMessage('');
+            });
+        }
+
+        function convertFromDecimal(raw) {
+            const trimmed = raw.trim();
+            if (!/^\d+$/.test(trimmed))
+                throw new Error(currentLang === 'cs' ? 'V decimálním poli mohou být jen číslice 0–9.' : 'Only digits 0–9 are allowed in the decimal field.');
+            const n = Number(trimmed);
+            validateRange(n);
+            return n;
+        }
+
+        function convertFromBinary(raw) {
+            const trimmed = raw.trim();
+            if (!/^[01]+$/.test(trimmed))
+                throw new Error(currentLang === 'cs' ? 'V binárním poli mohou být jen 0 a 1.' : 'Only 0 and 1 are allowed in the binary field.');
+            if (trimmed.length > MAX_BIN_LEN)
+                throw new Error(currentLang === 'cs'
+                    ? `Binární vstup může mít maximálně ${MAX_BIN_LEN} bitů.`
+                    : `Binary input can have at most ${MAX_BIN_LEN} bits.`);
+            const n = parseInt(trimmed, 2);
+            validateRange(n);
+            return n;
+        }
+
+        function convertFromHex(raw) {
+            const trimmed = raw.trim().replace(/^0x/i, '');
+            if (!/^[0-9a-fA-F]+$/.test(trimmed))
+                throw new Error(currentLang === 'cs' ? 'V hexadecimálním poli mohou být jen znaky 0–9 a A–F.' : 'Only 0–9 and A–F are allowed in the hexadecimal field.');
+            if (trimmed.length > MAX_HEX_LEN)
+                throw new Error(currentLang === 'cs'
+                    ? `Hex vstup může mít maximálně ${MAX_HEX_LEN} znaků.`
+                    : `Hex input can have at most ${MAX_HEX_LEN} characters.`);
+            const n = parseInt(trimmed, 16);
+            validateRange(n);
+            return n;
+        }
+
+        function applyValue(source, rawValue) {
+            const val = (rawValue || '').trim();
+            const upper = val.toUpperCase();
+            clearInputErrors();
+            document.body.classList.remove('numbers-error');
+            if (upper !== 'NOSTROMO') { document.body.classList.remove('muthur-mode'); hideBootOverlay(); }
+            if (val === '') { clearAllBase(); return; }
+            if (upper === 'NOSTROMO') {
+                document.body.classList.add('muthur-mode');
+                playBootSequence();
+                setOutputs('', '', '');
+                statusMessage.classList.remove('error');
+                statusMessage.textContent = currentLang === 'cs' ? 'Dobrý den, pane učiteli Bubílek!' : 'Good day, Mr. Teacher Bubílek!';
+                setList(stepsList, currentLang === 'cs' ? [
+                    'Zachycen speciální vstup: NOSTROMO.',
+                    'Systém přepnut do režimu MU/TH/UR 6000.',
+                    'Priorita potvrzena. Vítejte na palubě.'
+                ] : [
+                    'Special input detected: NOSTROMO.',
+                    'System switched to MU/TH/UR 6000 mode.',
+                    'Priority confirmed. Welcome aboard.'
+                ]);
+                return;
+            }
+            try {
+                let decimalValue;
+                if (source === 'bin') decimalValue = convertFromBinary(val);
+                if (source === 'dec') decimalValue = convertFromDecimal(val);
+                if (source === 'hex') decimalValue = convertFromHex(val);
+                const binary = formatSigned(decimalValue, 2);
+                const decimal = String(decimalValue);
+                const hex = formatSigned(decimalValue, 16);
+                isUpdating = true;
+                binaryInput.value = binary;
+                decimalInput.value = decimal;
+                hexInput.value = hex;
+                isUpdating = false;
+                setOutputs(binary, decimal, hex);
+                renderBitBreakdown(binary);
+                document.body.classList.remove('numbers-error');
+                statusMessage.classList.remove('error');
+                statusMessage.textContent = tr('converted_ok');
+                const srcNameCS = source === 'bin' ? 'binární' : source === 'dec' ? 'decimální' : 'hexadecimální';
+                const srcNameEN = source === 'bin' ? 'binary' : source === 'dec' ? 'decimal' : 'hexadecimal';
+                setList(stepsList, currentLang === 'cs' ? [
+                    `Systém poznal, že vstup patří do ${srcNameCS} soustavy: ${val}.`,
+                    'Každý znak se zkontroloval, jestli je v dané soustavě povolený.',
+                    `Vstup se převedl na decimální hodnotu ${decimal}, protože ta slouží jako společný mezikrok.`,
+                    `Z decimální hodnoty se spočítal binární zápis ${binary}.`,
+                    `Ze stejné decimální hodnoty se spočítal hexadecimální zápis ${hex}.`,
+                    'Výsledky se zalomily do karet tak, aby nepřetékaly mimo layout.'
+                ] : [
+                    `The system detected that the input belongs to the ${srcNameEN} system: ${val}.`,
+                    'Each character was checked to make sure it is allowed for that system.',
+                    `The input was converted into the decimal value ${decimal}, because decimal is used as the shared middle step.`,
+                    `From the decimal value, the binary form ${binary} was calculated.`,
+                    `The hexadecimal form ${hex} was calculated from the same decimal value.`,
+                    'The results were wrapped inside cards so they never overflow the layout.'
+                ]);
+            } catch (error) {
+                setOutputs('', '', '');
+                renderBitBreakdown('');
+                document.body.classList.add('numbers-error');
+                statusMessage.classList.add('error');
+                statusMessage.innerHTML = `<span class="error-text">${error.message}</span>`;
+                if (source === 'bin') binaryInput.classList.add('error');
+                if (source === 'dec') decimalInput.classList.add('error');
+                if (source === 'hex') hexInput.classList.add('error');
+            }
+        }
+
+        function parseMask(maskRaw) {
+            const raw = (maskRaw || '').trim();
+            if (!raw) return { prefix: 24, maskInt: 0xFFFFFF00 >>> 0, maskText: '255.255.255.0' };
+            if (/^\/\d{1,2}$/.test(raw)) {
+                const prefix = Number(raw.slice(1));
+                if (prefix < 0 || prefix > 32)
+                    throw new Error(currentLang === 'cs' ? 'Prefix musí být v rozsahu /0 až /32.' : 'Prefix must be in the /0 to /32 range.');
+                const maskInt = prefix === 0 ? 0 : ((0xFFFFFFFF << (32 - prefix)) >>> 0);
+                return { prefix, maskInt, maskText: intToIp(maskInt) };
+            }
+            const parts = raw.split('.');
+            if (parts.length !== 4)
+                throw new Error(currentLang === 'cs' ? 'Maska musí být ve tvaru 255.255.255.0 nebo /24.' : 'Mask must be in the form 255.255.255.0 or /24.');
+            const nums = parts.map(p => {
+                if (!/^\d+$/.test(p)) throw new Error(currentLang === 'cs' ? 'Maska musí obsahovat jen čísla a tečky.' : 'The mask can only contain digits and dots.');
+                const n = Number(p);
+                if (n < 0 || n > 255) throw new Error(currentLang === 'cs' ? 'Každý oktet masky musí být v rozsahu 0 až 255.' : 'Each mask octet must be in the 0 to 255 range.');
+                return n;
+            });
+            const maskInt = ipToInt(nums);
+            const bits = maskInt.toString(2).padStart(32, '0');
+            if (!/^1*0*$/.test(bits))
+                throw new Error(currentLang === 'cs' ? 'Maska není platná. Jedničky musí být souvislé zleva.' : 'The mask is invalid. Ones must be contiguous from the left.');
+            const prefix = bits.indexOf('0') === -1 ? 32 : bits.indexOf('0');
+            return { prefix, maskInt, maskText: nums.join('.') };
+        }
+
+        function isIncompleteMask(maskValue) {
+            if (!maskValue) return false;
+            // Only bare "/" is incomplete for prefix format
+            if (/^\/$/.test(maskValue)) return true;
+            // For dot-notation: incomplete if it ends with a dot or has fewer than 4 octets
+            if (/^\d{1,3}(\.\d{0,3}){0,3}$/.test(maskValue) && maskValue.split('.').length < 4) return true;
+            if (/^\d{1,3}(\.\d{0,3}){0,2}\.$/.test(maskValue)) return true;
+            return false;
+        }
+
+        function clearIpOutputs() {
+            ipParts.textContent = '—'; ipBinary.textContent = '—'; ipMeaning.textContent = '—';
+            ipPrefixOut.textContent = '—'; ipNetworkOut.textContent = '—'; ipBroadcastOut.textContent = '—';
+            ipHostRange.textContent = '—'; ipHostCount.textContent = '—'; ipTotalCount.textContent = '—';
+            hideSubnetVisual();
+        }
+
+        function convertIp() {
+            ipInput.classList.remove('error'); maskInput.classList.remove('error');
+            document.body.classList.remove('numbers-error');
+            const value = ipInput.value.trim();
+            const maskValue = maskInput.value.trim();
+            if (!value && !maskValue) { clearIpOutputs(); return; }
+            if (value && isIncompleteMask(maskValue)) {
+                clearIpOutputs();
+                ipPrefixOut.textContent = maskValue || '—';
+                ipMeaning.textContent = tr('maskTyping');
+                setList(ipSteps, I18N[currentLang].maskSteps);
+                return;
+            }
+            try {
+                const parts = value.split('.');
+                if (parts.length !== 4)
+                    throw new Error(currentLang === 'cs' ? 'IP adresa musí mít přesně 4 části oddělené tečkou.' : 'IP address must have exactly 4 parts separated by dots.');
+                const nums = parts.map(p => {
+                    if (!/^\d+$/.test(p)) throw new Error(currentLang === 'cs' ? 'Každý oktet IP musí být číslo 0 až 255.' : 'Each IP octet must be a number from 0 to 255.');
+                    const n = Number(p);
+                    if (n < 0 || n > 255) throw new Error(currentLang === 'cs' ? 'Každý oktet IP musí být v rozsahu 0 až 255.' : 'Each IP octet must be in the 0 to 255 range.');
+                    return n;
+                });
+                const ipInt = ipToInt(nums);
+                const { prefix, maskInt, maskText } = parseMask(maskValue);
+                const network = (ipInt & maskInt) >>> 0;
+                const broadcast = (network | (~maskInt >>> 0)) >>> 0;
+                const totalAddresses = 2 ** (32 - prefix);
+                let firstHost = network, lastHost = broadcast, hosts = totalAddresses;
+                if (prefix <= 30) { firstHost = network + 1; lastHost = broadcast - 1; hosts = Math.max(totalAddresses - 2, 0); }
+                ipParts.textContent = nums.join(' | ');
+                ipBinary.textContent = nums.map(toByteBinary).join(' . ');
+                ipMeaning.textContent = currentLang === 'cs'
+                    ? `IPv4 má 32 bitů. Maska ${maskText} odděluje síťovou a host část.`
+                    : `IPv4 has 32 bits. Mask ${maskText} separates the network and host parts.`;
+                ipPrefixOut.textContent = `/${prefix} (${maskText})`;
+                ipNetworkOut.textContent = intToIp(network);
+                ipBroadcastOut.textContent = intToIp(broadcast);
+                ipTotalCount.textContent = String(totalAddresses);
+                ipHostCount.textContent = String(hosts);
+                ipHostRange.textContent = prefix <= 30
+                    ? `${intToIp(firstHost)} – ${intToIp(lastHost)}`
+                    : tr('special_range');
+
+                // Render subnet visual
+                renderSubnetVisual(prefix, nums, maskInt);
+
+                setList(ipSteps, currentLang === 'cs' ? [
+                    `IP ${value} se rozdělila na čtyři oktety: ${nums.join(', ')}.`,
+                    `Každý oktet se převedl na 8 bitů: ${nums.map(toByteBinary).join(' . ')}.`,
+                    `Maska ${maskText} znamená prefix /${prefix}, tedy prvních ${prefix} bitů patří síti.`,
+                    `Síťová adresa vznikla bitovou operací AND mezi IP a maskou: ${intToIp(network)}.`,
+                    `Broadcast vznikl nastavením všech host bitů na 1: ${intToIp(broadcast)}.`,
+                    `Použitelný rozsah hostů je ${prefix <= 30 ? `${intToIp(firstHost)} až ${intToIp(lastHost)}` : 'speciální'} a počet hostů je ${hosts}.`
+                ] : [
+                    `The IP ${value} was split into four octets: ${nums.join(', ')}.`,
+                    `Each octet was converted into 8 bits: ${nums.map(toByteBinary).join(' . ')}.`,
+                    `Mask ${maskText} means prefix /${prefix}, so the first ${prefix} bits belong to the network.`,
+                    `The network address was calculated with a bitwise AND between the IP and the mask: ${intToIp(network)}.`,
+                    `The broadcast address was calculated by setting all host bits to 1: ${intToIp(broadcast)}.`,
+                    `The usable host range is ${prefix <= 30 ? `${intToIp(firstHost)} to ${intToIp(lastHost)}` : 'special'} and the host count is ${hosts}.`
+                ]);
+            } catch (error) {
+                document.body.classList.add('numbers-error');
+                ipInput.classList.add('error');
+                if (maskValue && !isIncompleteMask(maskValue)) maskInput.classList.add('error');
+                ipParts.textContent = tr('error_word'); ipBinary.textContent = tr('error_word');
+                ipMeaning.textContent = error.message;
+                ipPrefixOut.textContent = tr('error_word'); ipNetworkOut.textContent = tr('error_word');
+                ipBroadcastOut.textContent = tr('error_word'); ipHostRange.textContent = tr('error_word');
+                ipHostCount.textContent = tr('error_word'); ipTotalCount.textContent = tr('error_word');
+                hideSubnetVisual();
+            }
+        }
+
+        function normalizeHexInput(raw) {
+            if (!raw) return '#';
+            if (raw[0] !== '#') return '#' + raw.replace(/#/g, '');
+            return '#' + raw.slice(1).replace(/#/g, '');
+        }
+
+        function rgbToHex(r, g, b) {
+            return '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0').toUpperCase()).join('');
+        }
+
+        function clearColorOutputs() {
+            colorHexOut.textContent = '—'; colorRgbOut.textContent = '—'; colorBinOut.textContent = '—';
+            document.body.classList.remove('color-sync');
+            rootStyle.style.removeProperty('--dynamic-num-color');
+        }
+
+        function convertColor(source, live = false) {
+            hexColorInput.classList.remove('error'); rgbInput.classList.remove('error');
+            document.body.classList.remove('numbers-error');
+            try {
+                let r, g, b;
+                if (source === 'hex') {
+                    let raw = normalizeHexInput(hexColorInput.value.trim());
+                    hexColorInput.value = raw;
+                    if (raw === '#') { clearColorOutputs(); return; }
+                    if (live && !/^#[0-9a-fA-F]{6}$/.test(raw)) {
+                        colorHexOut.textContent = raw;
+                        colorRgbOut.textContent = currentLang === 'cs' ? 'Doplň 6 hex znaků' : 'Complete the 6 hex characters';
+                        colorBinOut.textContent = currentLang === 'cs' ? 'Čekám na kompletní zápis #RRGGBB' : 'Waiting for a complete #RRGGBB value';
+                        return;
+                    }
+                    if (!/^#[0-9a-fA-F]{6}$/.test(raw))
+                        throw new Error(currentLang === 'cs' ? 'HEX barva musí mít tvar #RRGGBB.' : 'HEX color must have the form #RRGGBB.');
+                    r = parseInt(raw.slice(1, 3), 16);
+                    g = parseInt(raw.slice(3, 5), 16);
+                    b = parseInt(raw.slice(5, 7), 16);
+                    rgbInput.value = `${r},${g},${b}`;
+                    hexColorInput.value = raw.toUpperCase();
+                } else {
+                    const raw = rgbInput.value.trim();
+                    if (!raw) { clearColorOutputs(); return; }
+                    const parts = raw.split(',').map(v => v.trim());
+                    if (live && parts.length < 3) {
+                        colorHexOut.textContent = '#';
+                        colorRgbOut.textContent = raw;
+                        colorBinOut.textContent = currentLang === 'cs' ? 'Doplň 3 RGB kanály oddělené čárkou' : 'Complete 3 RGB channels separated by commas';
+                        return;
+                    }
+                    if (parts.length !== 3)
+                        throw new Error(currentLang === 'cs' ? 'RGB musí mít tři čísla oddělená čárkou.' : 'RGB must contain three numbers separated by commas.');
+                    [r, g, b] = parts.map(p => {
+                        if (!/^\d+$/.test(p)) throw new Error(currentLang === 'cs' ? 'RGB kanály musí být čísla 0 až 255.' : 'RGB channels must be numbers from 0 to 255.');
+                        const n = Number(p);
+                        if (n < 0 || n > 255) throw new Error(currentLang === 'cs' ? 'RGB kanály musí být v rozsahu 0 až 255.' : 'RGB channels must be in the 0 to 255 range.');
+                        return n;
+                    });
+                    hexColorInput.value = rgbToHex(r, g, b);
+                }
+                const hex = rgbToHex(r, g, b);
+                colorHexOut.textContent = hex;
+                colorRgbOut.textContent = `${r}, ${g}, ${b}`;
+                colorBinOut.textContent = `${toByteBinary(r)} ${toByteBinary(g)} ${toByteBinary(b)}`;
+                colorSwatch.style.background = hex;
+                rootStyle.style.setProperty('--dynamic-num-color', hex);
+                document.body.classList.add('color-sync');
+                setList(colorSteps, currentLang === 'cs' ? [
+                    `Vstup se rozdělil na tři barevné kanály R = ${r}, G = ${g}, B = ${b}.`,
+                    `Každý kanál je číslo od 0 do 255 a zároveň má hex tvar ${r.toString(16).padStart(2, '0').toUpperCase()}, ${g.toString(16).padStart(2, '0').toUpperCase()}, ${b.toString(16).padStart(2, '0').toUpperCase()}.`,
+                    `Spojením těchto tří dvojic vznikne HEX kód ${hex}.`,
+                    `Stejné hodnoty lze zapsat i binárně jako ${toByteBinary(r)} ${toByteBinary(g)} ${toByteBinary(b)}.`,
+                    'Nakonec se z těchto tří kanálů vykreslí náhled výsledné barvy a pozadí se s ní synchronizuje.'
+                ] : [
+                    `The input was split into three color channels R = ${r}, G = ${g}, B = ${b}.`,
+                    `Each channel is a number from 0 to 255 and also has the hex form ${r.toString(16).padStart(2, '0').toUpperCase()}, ${g.toString(16).padStart(2, '0').toUpperCase()}, ${b.toString(16).padStart(2, '0').toUpperCase()}.`,
+                    `Joining these three pairs creates the HEX code ${hex}.`,
+                    `The same values can also be written in binary as ${toByteBinary(r)} ${toByteBinary(g)} ${toByteBinary(b)}.`,
+                    'Finally, those three channels render the preview color and the background digits sync with it.'
+                ]);
+            } catch (error) {
+                document.body.classList.add('numbers-error');
+                if (source === 'hex') hexColorInput.classList.add('error');
+                if (source === 'rgb') rgbInput.classList.add('error');
+                colorHexOut.textContent = tr('error_word');
+                colorRgbOut.textContent = tr('error_word');
+                colorBinOut.textContent = error.message;
+                document.body.classList.remove('color-sync');
+                rootStyle.style.removeProperty('--dynamic-num-color');
+            }
+        }
+
+        function randomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+        function randomBin() {
+            const len = randomInt(6, 16);
+            return Array.from({ length: len }, () => Math.random() > 0.5 ? '1' : '0').join('').replace(/^0+/, '1');
+        }
+        function randomDec() { return String(randomInt(1, 50000)); }
+        function randomHex() { return randomInt(1, 65535).toString(16).toUpperCase(); }
+        function randomIp() { return `${randomInt(1, 223)}.${randomInt(0, 255)}.${randomInt(0, 255)}.${randomInt(1, 254)}`; }
+        function randomPrefix() { const options = ['/8', '/16', '/24', '/27', '/30']; return options[randomInt(0, options.length - 1)]; }
+        function randomColorHex() { return '#' + randomInt(0, 16777215).toString(16).padStart(6, '0').toUpperCase(); }
+
+        binaryInput.addEventListener('input', () => { if (!isUpdating) applyValue('bin', binaryInput.value); });
+        decimalInput.addEventListener('input', () => { if (!isUpdating) applyValue('dec', decimalInput.value); });
+        hexInput.addEventListener('input', () => { if (!isUpdating) applyValue('hex', hexInput.value); });
+
+        attachLimitWarning(binaryInput, MAX_BIN_LEN, I18N.cs.limitBin, I18N.en.limitBin);
+        attachLimitWarning(decimalInput, 10, I18N.cs.limitDec, I18N.en.limitDec);
+        attachLimitWarning(hexInput, MAX_HEX_LEN, I18N.cs.limitHex, I18N.en.limitHex);
+        attachLimitWarning(hexColorInput, 7, I18N.cs.limitColor, I18N.en.limitColor);
+
+        document.getElementById('clearBtn').addEventListener('click', clearAllBase);
+        document.getElementById('exampleBtn').addEventListener('click', () => {
+            const modes = ['bin', 'dec', 'hex'];
+            const picked = modes[randomInt(0, modes.length - 1)];
+            if (picked === 'bin') applyValue('bin', randomBin());
+            if (picked === 'dec') applyValue('dec', randomDec());
+            if (picked === 'hex') applyValue('hex', randomHex());
+        });
+
+        document.querySelectorAll('[data-example-type]').forEach(chip =>
+            chip.addEventListener('click', () => applyValue(chip.dataset.exampleType, chip.dataset.exampleValue)));
+
+        challengeCheck.addEventListener('click', checkChallenge);
+        challengeNext.addEventListener('click', newChallenge);
+        challengeAnswer.addEventListener('keydown', (e) => { if (e.key === 'Enter') checkChallenge(); });
+
+        document.getElementById('ipConvertBtn').addEventListener('click', convertIp);
+        document.getElementById('ipExampleBtn').addEventListener('click', () => {
+            ipInput.value = randomIp();
+            maskInput.value = randomPrefix();
+            convertIp();
+        });
+        ipInput.addEventListener('input', convertIp);
+        maskInput.addEventListener('input', convertIp);
+
+        document.getElementById('colorConvertBtn').addEventListener('click', () =>
+            convertColor(hexColorInput.value.trim() && hexColorInput.value.trim() !== '#' ? 'hex' : 'rgb'));
+        document.getElementById('colorExampleBtn').addEventListener('click', () => {
+            hexColorInput.value = randomColorHex();
+            convertColor('hex');
+        });
+
+        hexColorInput.addEventListener('focus', () => { if (!hexColorInput.value) hexColorInput.value = '#'; });
+        hexColorInput.addEventListener('input', () => { hexColorInput.value = normalizeHexInput(hexColorInput.value); convertColor('hex', true); });
+        rgbInput.addEventListener('input', () => convertColor('rgb', true));
+
+        document.querySelectorAll('.nav-btn[data-tab]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.nav-btn[data-tab]').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(btn.dataset.tab).classList.add('active');
+            });
+        });
+
+        langToggle.addEventListener('click', () => { currentLang = currentLang === 'cs' ? 'en' : 'cs'; applyTranslations(); });
+        themeToggle.addEventListener('click', () => { document.body.classList.toggle('light-mode'); applyTranslations(); });
+
+        const generators = [
+            () => (Math.random() > 0.5 ? '0' : '1'),
+            () => String(Math.floor(Math.random() * 256)),
+            () => Math.floor(Math.random() * 256).toString(16).toUpperCase(),
+            () => `${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}`,
+            () => '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0').toUpperCase()
+        ];
+
+        function spawnNumber() {
+            const el = document.createElement('div');
+            el.className = 'num';
+            el.textContent = generators[Math.floor(Math.random() * generators.length)]();
+            el.style.left = `${Math.random() * 94}vw`;
+            el.style.fontSize = `${12 + Math.random() * 14}px`;
+            const duration = 9 + Math.random() * 8;
+            el.style.animationDuration = `${duration}s`;
+            numbersLayer.appendChild(el);
+            setTimeout(() => el.remove(), duration * 1000);
+        }
+
+        setInterval(spawnNumber, 320);
+        clearAllBase();
+        maskInput.value = '';
+        colorSwatch.style.background = '#2A7FFF';
+        hexColorInput.value = '#';
+        newChallenge();
+        applyTranslations();
+    </script>
+</html>
